@@ -225,7 +225,7 @@ contains
         endif
         pa%npix_1D = anint( m%lx / pa%phys_diam )
         if( abs(pa%npix_1d - (m%lx/pa%phys_diam)) * 1000000 > 1.0 ) then
-            write(stderr, *) "Error! The calculated number of pixels is very likely incorrect.", pa%npix_1D
+            write(stderr, *) "Error! The calculated number of pixels is very likely incorrect.", pa%npix_1D, ". World size = ", m%lx, ". Pixel diameter = ", pa%phys_diam, ". Error = ", abs(pa%npix_1d - (m%lx/pa%phys_diam))
             stop
         endif
         pa%npix = pa%npix_1D**2
@@ -260,7 +260,7 @@ contains
     end subroutine init_pix
 
 
-    subroutine fem(m, res, k, vk, scatfact_e, comm, istat, rot_begin, rot_end)
+    subroutine fem(m, res, k, ik, vk, scatfact_e, comm, istat, rot_begin, rot_end)
 #ifndef SERIAL
         use mpi
 #endif
@@ -268,6 +268,7 @@ contains
         type(model), intent(in) :: m
         double precision, intent(in) :: res
         double precision, dimension(:), intent(in) :: k
+        double precision, dimension(:), intent(out) :: ik
         double precision, dimension(:), INTENT(OUT) :: vk
         double precision, dimension(:,:), pointer :: scatfact_e
         integer, intent(out) :: istat
@@ -347,6 +348,7 @@ contains
 
         if(myid.eq.0)then
             do i=1, nk
+                ik(i) = abs(sum_int(i))/(pa%npix*nrot)
                 Vk(i) = (sum_int_sq(i)/(pa%npix*nrot))/((sum_int(i)/(pa%npix*nrot))**2)-1.0
             end do
         endif

@@ -26,7 +26,7 @@ program hrmc
     double precision :: temperature
     double precision :: max_move
     double precision :: Q, res, alpha
-    double precision, pointer, dimension(:) :: k, vk, vk_exp, vk_exp_err
+    double precision, pointer, dimension(:) :: k, ik, vk, vk_exp, vk_exp_err
     double precision, allocatable, dimension(:,:) :: cutoff_r 
     double precision, pointer, dimension(:,:) :: scatfact_e
     double precision :: scale_fac, scale_fac_initial, beta, boltzmann
@@ -169,7 +169,8 @@ program hrmc
     nk = size(k)
 
     call fem_initialize(m, res, k, nk, ntheta, nphi, npsi, scatfact_e, istat)
-    allocate(vk(size(vk_exp)))
+    allocate(ik(size(vk_exp)), vk(size(vk_exp)))
+    ik = 0.0
     vk = 0.0
 
     ! Print warning message if the user is using too many cores.
@@ -186,14 +187,14 @@ program hrmc
 
     !------------------- Call femsim. -----------------!
 
-    ! Fem updates vk based on the intensity calculations.
-    call fem(m, res, k, vk, scatfact_e, communicator, istat)
+    ! Fem updates ik and vk based on the intensity calculations.
+    call fem(m, res, k, ik, vk, scatfact_e, communicator, istat)
 
     if(myid.eq.0)then
-        ! Write initial vk to file
+        ! Write initial ik and vk to file
         open(unit=52,file=trim(vki_fn),form='formatted',status='unknown')
             do i=1, nk
-                write(52,*) k(i), vk(i)
+                write(52,*) k(i), ik(i), vk(i)
             enddo
         close(52)
     endif
